@@ -1,6 +1,6 @@
 import { Hooks as CoreHooks, Workspace, structUtils } from '@yarnpkg/core';
 import { /* just for type declarations */ } from '@yarnpkg/plugin-npm';
-import { minVersion, rsort } from 'semver';
+import { minVersion, minSatisfying, rsort } from 'semver';
 import { dummyPkgDist } from './index';
 
 const findOptionalDependenciesInWorkspace = (workspace: Workspace) : Map<string, string> => {  
@@ -70,33 +70,53 @@ const hooks : CoreHooks = {
       }
     }
 
-    // it is not a metadata request, or none to fetch an optional package, so normal execution ...
+    // it is not a metadata request, or none to fetch an optional package, so normal execution!
     if (!ranges) {
       return executor;
     }
 
-    // if it is a metadata request to an optional package, check if it is found, if so all is good!
+    // if it is a metadata request to an optional package ...
     return async () => {
+      const dummyPkgs = ranges => Object.fromEntries(
+        ranges.map(range =>
+          // let us use the minimum version that satisfies the specified range(s)!
+          ([minVersion(range), { 
+            name: pkg, dist: dummyPkgDist
+          }])));
+
       try {
-        return await executor();
+        // ... we first need to check if the package is found in general, before we can proceed
+        const result = await executor();
+
+        // if the package exists, we now need to check if all ranges are satisfied by at least one version
+        const body = JSON.parse(result.body.toString()), versions = Object.keys(body.versions);
+
+        // if we do not find any unsatisfied ranges, we can return the result
+        const unsatisfied = ranges.filter(range => !minSatisfying(versions, range));
+        if (!unsatisfied.length) {
+          return result;
+        }
+
+        // otherwise we will have to add some dummy versions for all ranges that are unsatisfied
+        Object.assign(body.versions, dummyPkgs(unsatisfied));
+
+        // we only need a body here! this is the only thing Yarn will care about (and call a toString on)
+        return { body: JSON.stringify(body) };
       } catch(e) {
         // if the package was not found, return a dummy metadata object
         if (e.name !== `HTTPError` || e.response.statusCode !== 404) {
           throw e;
         }
 
-        // let us use the minimum version that satisfies the specified range(s)!
-        const versions = ranges.map(range => minVersion(range));
+        // the package was not found at all, so we need to provide dummy versions for all ranges
+        const versions = dummyPkgs(ranges);
         return {
-          // we only need a body here! this is the only thing Yarn will care about (and call a toString on)
           body: JSON.stringify({
             name: pkg,
             [`dist-tags`]: {
-              latest: `${rsort(versions)[0]}`
+              latest: `${rsort(Object.keys(versions))[0]}`
             },
-            versions: Object.fromEntries(versions.map(version => ([version, { 
-              name: pkg, dist: dummyPkgDist
-            }])))
+            versions
           })
         };
       }
