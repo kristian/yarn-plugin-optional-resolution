@@ -1894,9 +1894,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yarn-plugin-better-optional@workspace:.":
+"yarn-plugin-optional-resolution@workspace:.":
   version: 0.0.0-use.local
-  resolution: "yarn-plugin-better-optional@workspace:."
+  resolution: "yarn-plugin-optional-resolution@workspace:."
   dependencies:
     "@types/node": ^18.15.5
     "@types/semver": ^7

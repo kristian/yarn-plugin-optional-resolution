@@ -4,7 +4,7 @@ import { minVersion, minSatisfying, rsort } from 'semver';
 import { dummyPkgDist } from './index';
 
 const findOptionalDependenciesInWorkspace = (workspace: Workspace) : Map<string, string> => {  
-  // this includes optional, Yarn doesn't make any difference (that's the reason why to go for better-optional ;), we do!)
+  // this includes optional, Yarn doesn't make any difference (that's the reason why to go for optional-resolution ;), we do!)
   const dependencies = Array.from(workspace.manifest.getForScope(`dependencies`).values());
 
   // if a package.json contains (even yet uninstalled) optional packages or a yarn add with the --optional flag

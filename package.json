@@ -1,5 +1,5 @@
 {
-  "name": "yarn-plugin-better-optional",
+  "name": "yarn-plugin-optional-resolution",
   "version": "1.1.0",
   "description": "Yarn Berry plugin that adds support for non-existing optional package dependencies",
   "keywords": [
@@ -7,7 +7,9 @@
     "berry",
     "plugin",
     "optional",
-    "dependencies"
+    "resolution",
+    "dependencies",
+    "optionalDependencies"
   ],
   "author": {
     "name": "Kristian Kraljic",
@@ -17,12 +19,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kristian/yarn-plugin-better-optional.git"
+    "url": "https://github.com/kristian/yarn-plugin-optional-resolution.git"
   },
-  "homepage": "https://github.com/kristian/yarn-plugin-better-optional#readme",
+  "homepage": "https://github.com/kristian/yarn-plugin-optional-resolution#readme",
   "main": "./sources/index.ts",
   "scripts": {
-    "build": "builder build plugin"
+    "build": "builder build plugin && node --eval \"require('fs').copyFile('./bundles/@yarnpkg/plugin-optional-resolution.js','./bundles/@yarnpkg/plugin-better-optional.js',err=>{err&&process.exit(1)})\""
   },
   "dependencies": {
     "@yarnpkg/builder": "^3.2.7",
