@@ -25,7 +25,7 @@ This makes `"optionalDependencies"` truly optional, in a sense that they do not 
 You can add this plugin to your Yarn 2+ ("Berry") project running the following command:
 
 ```bash
-yarn plugin import https://raw.githubusercontent.com/kristian/yarn-plugin-optional-resolution/v1.1.0/bundles/%40yarnpkg/plugin-optional-resolution.js
+yarn plugin import https://raw.githubusercontent.com/kristian/yarn-plugin-optional-resolution/v1.2.0/bundles/%40yarnpkg/plugin-optional-resolution.js
 ```
 
 ## Author

@@ -1,6 +1,6 @@
 {
   "name": "yarn-plugin-optional-resolution",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Yarn Berry plugin that adds support for non-existing optional package dependencies",
   "keywords": [
     "yarn",
@@ -27,17 +27,17 @@
     "build": "builder build plugin && node --eval \"require('fs').copyFile('./bundles/@yarnpkg/plugin-optional-resolution.js','./bundles/@yarnpkg/plugin-better-optional.js',err=>{err&&process.exit(1)})\""
   },
   "dependencies": {
-    "@yarnpkg/builder": "^3.2.7",
-    "@yarnpkg/cli": "^3.5.0",
-    "@yarnpkg/core": "^3.5.0",
-    "@yarnpkg/plugin-npm": "^2.7.3",
-    "@yarnpkg/plugin-pack": "^3.2.0",
-    "semver": "^7.3.8",
-    "typescript": "5.0.2"
+    "@yarnpkg/builder": "^4.0.0",
+    "@yarnpkg/cli": "^4.0.1",
+    "@yarnpkg/core": "^4.0.1",
+    "@yarnpkg/plugin-npm": "^3.0.0",
+    "@yarnpkg/plugin-pack": "^4.0.0",
+    "semver": "^7.5.4",
+    "typescript": "5.2.2"
   },
   "devDependencies": {
-    "@types/node": "^18.15.5",
+    "@types/node": "^18",
     "@types/semver": "^7"
   },
-  "packageManager": "yarn@3.5.0"
+  "packageManager": "yarn@4.0.1"
 }

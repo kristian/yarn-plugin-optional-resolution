@@ -1,6 +1,6 @@
-import { Hooks as CoreHooks, Workspace, structUtils } from '@yarnpkg/core';
+import { Hooks as CoreHooks, Workspace, structUtils, YarnVersion } from '@yarnpkg/core';
 import { /* just for type declarations */ } from '@yarnpkg/plugin-npm';
-import { minVersion, minSatisfying, rsort } from 'semver';
+import { minVersion, minSatisfying, rsort, coerce, valid, gte } from 'semver';
 import { dummyPkgDist } from './index';
 
 const findOptionalDependenciesInWorkspace = (workspace: Workspace) : Map<string, string> => {  
@@ -84,12 +84,20 @@ const hooks : CoreHooks = {
             name: pkg, dist: dummyPkgDist
           }])));
 
+      // starting Yarn 4.0.0, the result.body contains a parsed JSON object already, before that the result.body contained a buffer that .toString() was called on (so we can return a string as well)
+      let parsedBody = true; // will get overridden below, just for safety purpose, assume we are running on 4.0.0 already
+      const parseBody = body => parsedBody ? body : JSON.parse(body.toString()),
+          buildResult = body => ({ statusCode: 200, headers: {}, body: parsedBody ? body : JSON.stringify(body) }) 
+
       try {
         // ... we first need to check if the package is found in general, before we can proceed
         const result = await executor();
 
+        // in case we received a result, we can use the result.body type to deduct if we need to parse it ourself
+        parsedBody = typeof result.body === `object` && !(result.body instanceof Buffer);
+
         // if the package exists, we now need to check if all ranges are satisfied by at least one version
-        const body = JSON.parse(result.body.toString()), versions = Object.keys(body.versions);
+        const body = parseBody(result.body), versions = Object.keys(body.versions);
 
         // if we do not find any unsatisfied ranges, we can return the result
         const unsatisfied = ranges.filter(range => !minSatisfying(versions, range));
@@ -101,24 +109,25 @@ const hooks : CoreHooks = {
         Object.assign(body.versions, dummyPkgs(unsatisfied));
 
         // we only need a body here! this is the only thing Yarn will care about (and call a toString on)
-        return { body: JSON.stringify(body) };
+        return buildResult(body);
       } catch(e) {
-        // if the package was not found, return a dummy metadata object
+        // special handling only if the package was not found at all
         if (e.name !== `HTTPError` || e.response.statusCode !== 404) {
           throw e;
         }
 
-        // the package was not found at all, so we need to provide dummy versions for all ranges
+        // in case we did not receive a result, we have to rely on the Yarn version, to determine if we should return a JSON object, or buffer / string
+        parsedBody = typeof YarnVersion === `undefined` || !valid(coerce(YarnVersion)) || gte(coerce(YarnVersion), `4.0.0`)
+
+        // the package was not found, so we need to provide dummy versions for all ranges
         const versions = dummyPkgs(ranges);
-        return {
-          body: JSON.stringify({
-            name: pkg,
-            [`dist-tags`]: {
-              latest: `${rsort(Object.keys(versions))[0]}`
-            },
-            versions
-          })
-        };
+        return buildResult({
+          name: pkg,
+          [`dist-tags`]: {
+            latest: `${rsort(Object.keys(versions))[0]}`
+          },
+          versions
+        });
       }
     }
   }
